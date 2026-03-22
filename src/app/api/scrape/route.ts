@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
 import { chromium } from "playwright";
 import ExifParser from "exif-parser";
 import jsQR from "jsqr";

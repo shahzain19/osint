@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useState, Suspense } from "react";
 import { Search, Loader2, Camera, Sparkles, Shield, Phone, FileText, QrCode, Link, Globe, ShieldAlert, Menu, X as CloseIcon, ArrowRight, History, Check, MapPin, Tag } from "lucide-react";

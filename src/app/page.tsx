@@ -1,7 +1,7 @@
 "use client";
+export const dynamic = "force-dynamic";
 
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
-import { useAuth } from "@clerk/react";
+import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import { Search, Shield, Users, Zap, Globe, Fingerprint, Camera, Database, HelpCircle, ChevronDown, ArrowRight, Activity, Lock, SearchCode } from "lucide-react";
 import { useEffect } from "react";
