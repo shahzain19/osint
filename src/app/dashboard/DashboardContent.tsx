@@ -23,14 +23,6 @@ export function DashboardContent() {
   const { user } = useUser();
   const idFromUrl = searchParams.get("id");
 
-  if (!mounted) {
-    return (
-      <div className="flex-grow flex flex-col items-center justify-center p-6 bg-white w-full h-full">
-        <Loader2 className="w-10 h-10 animate-spin text-neutral-100" />
-      </div>
-    );
-  }
-
   const [activeTool, setActiveTool] = useState<"oracle" | "exif" | "footprint" | "face" | "phone" | "document" | "qrcode" | "shadow" | "nexus" | "omni" | "breach">("omni");
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
@@ -71,6 +63,14 @@ export function DashboardContent() {
   } : "skip");
 
   const [scrapeStatus, setScrapeStatus] = useState("");
+
+  if (!mounted) {
+    return (
+      <div className="flex-grow flex flex-col items-center justify-center p-6 bg-white w-full h-full">
+        <Loader2 className="w-10 h-10 animate-spin text-neutral-100" />
+      </div>
+    );
+  }
 
   const handleSearch = async () => {
     const needsQuery = ["oracle", "footprint", "shadow", "nexus", "omni", "breach"].includes(activeTool);
