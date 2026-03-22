@@ -1,12 +1,12 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { Search, Loader2, Camera, Sparkles, Shield, Phone, FileText, QrCode, Link, Globe, ShieldAlert, Menu, X as CloseIcon, ArrowRight, History, Check, MapPin, Tag } from "lucide-react";
 import { useAction, useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import ReactMarkdown from "react-markdown";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { CaseManager } from "@/components/intelligence/CaseManager";
 import { EvidenceVault } from "@/components/intelligence/EvidenceVault";
@@ -14,9 +14,17 @@ import { Briefcase, ChevronDown } from "lucide-react";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const { userId } = useAuth();
   const { user } = useUser();
   const idFromUrl = searchParams.get("id");
+
+  if (!mounted) return null;
 
   const [activeTool, setActiveTool] = useState<"oracle" | "exif" | "footprint" | "face" | "phone" | "document" | "qrcode" | "shadow" | "nexus" | "omni" | "breach">("omni");
   const [query, setQuery] = useState("");
@@ -241,9 +249,9 @@ function DashboardContent() {
               </div>
               <button 
                 onClick={() => {
-                  const params = new URLSearchParams(window.location.search);
+                  const params = new URLSearchParams(searchParams.toString());
                   params.delete('projectId');
-                  window.location.search = params.toString();
+                  router.push(`/dashboard?${params.toString()}`);
                 }}
                 className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white text-[10px] font-bold uppercase tracking-widest transition-all"
               >

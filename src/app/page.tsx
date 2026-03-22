@@ -2,18 +2,26 @@
 export const dynamic = "force-dynamic";
 
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
-import { redirect } from "next/navigation";
+import { useRouter, redirect } from "next/navigation";
 import { Search, Shield, Users, Zap, Globe, Fingerprint, Camera, Database, HelpCircle, ChevronDown, ArrowRight, Activity, Lock, SearchCode } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function LandingPage() {
   const { userId, isLoaded } = useAuth();
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (isLoaded && userId) {
-      redirect("/dashboard");
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && isLoaded && userId) {
+      router.push("/dashboard");
     }
-  }, [isLoaded, userId]);
+  }, [isLoaded, userId, mounted, router]);
+
+  if (!mounted) return null;
 
   return (
     <div className="flex flex-col min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
