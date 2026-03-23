@@ -590,8 +590,17 @@ export function NexusContent() {
         {/* Feed */}
         <div className="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-100 hover:scrollbar-thumb-neutral-200">
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center max-w-4xl mx-auto w-full px-8 pb-20">
+            <div className="h-full flex flex-col items-center justify-center max-w-4xl mx-auto w-full px-8 pb-20 mt-10">
               <div className="w-full max-w-2xl space-y-3">
+                <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-3 duration-500">
+                  <div className="w-16 h-16 bg-black rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-2xl shadow-black/10">
+                    <Shield className="w-8 h-8 text-white" />
+                  </div>
+                  <h1 className="text-4xl font-bold tracking-tight text-black mb-3">Welcome to OSINT Nexus</h1>
+                  <p className="text-lg text-neutral-500 max-w-lg mx-auto leading-relaxed">
+                    Advanced intelligence gathering and offensive security analysis platform. How can I assist your operation today?
+                  </p>
+                </div>
                 <div className="flex items-center justify-between mb-6 px-1 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-[0.2em]">Suggested Inquiries</p>
                   <span className="text-[10px] font-semibold text-neutral-300">HUB-V2 ACTIVE</span>
