@@ -730,6 +730,66 @@ export async function POST(req: Request) {
       } finally {
         await context.close();
       }
+    } else if (mode === "id_collector" && query) {
+      // MODE: ID COLLECTOR (Analytics & Tracking Reversing)
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      try {
+        const url = query.startsWith('http') ? query : `https://${query}`;
+        // Use 'domcontentloaded' + manual wait for better reliability on heavy sites than 'networkidle'
+        const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 35000 });
+        await page.waitForTimeout(8000); 
+        const html = await page.content();
+        const headers = response?.headers() || {};
+        
+        combinedScrapedData += `\n--- ID_COLLECTOR SCAN FOR "${url}" ---\n`;
+        
+        // 1. Google Analytics (Universal Analytics)
+        const uaMatch = html.match(/UA-\d+-\d+/g);
+        if (uaMatch) combinedScrapedData += `[GOOGLE ANALYTICS (UA)]: ${Array.from(new Set(uaMatch)).join(", ")}\n`;
+        
+        // 2. Google Analytics 4
+        const gMatch = html.match(/G-[A-Z0-9]{10,}/g);
+        if (gMatch) combinedScrapedData += `[GOOGLE ANALYTICS 4 (G)]: ${Array.from(new Set(gMatch)).join(", ")}\n`;
+        
+        // 3. Google Tag Manager
+        const gtmMatch = html.match(/GTM-[A-Z0-9]{7,}/g);
+        if (gtmMatch) combinedScrapedData += `[GOOGLE TAG MANAGER (GTM)]: ${Array.from(new Set(gtmMatch)).join(", ")}\n`;
+        
+        // 4. Google AdSense
+        const pubMatch = html.match(/pub-\d{16}/g);
+        if (pubMatch) combinedScrapedData += `[GOOGLE ADSENSE (PUB)]: ${Array.from(new Set(pubMatch)).join(", ")}\n`;
+        
+        // 5. Facebook Pixel
+        const fbMatch = html.match(/fbq\('init',\s*'(\d+)'\)/g) || html.match(/'?\d{15,16}'?/g);
+        if (fbMatch) {
+          const ids = fbMatch.map(m => m.match(/\d+/)![0]);
+          combinedScrapedData += `[FACEBOOK PIXEL]: ${Array.from(new Set(ids)).join(", ")}\n`;
+        }
+        
+        // 6. Microsoft Clarity
+        const clarityMatch = html.match(/clarity\.ms\/tag\/(\w+)/g) || html.match(/_clarity_id\("(\w+)"\)/g);
+        if (clarityMatch) {
+          const ids = clarityMatch.map(m => m.match(/\/tag\/(\w+)|_clarity_id\("(\w+)"\)/)?.[1] || m.match(/\/tag\/(\w+)|_clarity_id\("(\w+)"\)/)?.[2]);
+          combinedScrapedData += `[MICROSOFT CLARITY]: ${Array.from(new Set(ids.filter(id => id))).join(", ")}\n`;
+        }
+
+        // 7. Mailchimp / MCJS
+        const mcMatch = html.match(/mcjs-connected-\w+/g);
+        if (mcMatch) combinedScrapedData += `[MAILCHIMP ID]: ${Array.from(new Set(mcMatch)).join(", ")}\n`;
+
+        // 8. Headers Check (X-Powered-By, Server, etc.)
+        combinedScrapedData += `\n[INFRASTRUCTURE FINGERPRINT]:\n`;
+        if (headers['server']) combinedScrapedData += `- Server: ${headers['server']}\n`;
+        if (headers['x-powered-by']) combinedScrapedData += `- Powered By: ${headers['x-powered-by']}\n`;
+        if (headers['via']) combinedScrapedData += `- Via: ${headers['via']}\n`;
+
+      } catch (e: any) {
+        console.error(`ID Collector failed for ${query}`, e);
+        combinedScrapedData += `[ID_COLLECTOR ERROR]: ${e.message}\n`;
+      } finally {
+        await context.close();
+      }
     } else if (additionalData) {
       // MODE: DIRECT SCRAPING
       const igMatch = additionalData.match(/(?:ig|instagram).*?@?(\w[\w\.\_]+)/i);

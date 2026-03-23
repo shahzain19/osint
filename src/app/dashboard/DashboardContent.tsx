@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense, useEffect } from "react";
-import { Search, Loader2, Camera, Sparkles, Shield, Phone, FileText, QrCode, Link, Globe, ShieldAlert, Menu, X as CloseIcon, ArrowRight, History, Check, MapPin, Tag } from "lucide-react";
+import { Search, Loader2, Camera, Sparkles, Shield, Phone, FileText, QrCode, Link, Globe, ShieldAlert, Menu, X as CloseIcon, ArrowRight, History, Check, MapPin, Tag, ShieldCheck } from "lucide-react";
 import { useAction, useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import ReactMarkdown from "react-markdown";
@@ -9,7 +9,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { CaseManager } from "@/components/intelligence/CaseManager";
 import { EvidenceVault } from "@/components/intelligence/EvidenceVault";
-import { Briefcase, ChevronDown } from "lucide-react";
+import { Briefcase, ChevronDown, Terminal } from "lucide-react";
 
 export function DashboardContent() {
   const searchParams = useSearchParams();
@@ -23,7 +23,7 @@ export function DashboardContent() {
   const { user } = useUser();
   const idFromUrl = searchParams.get("id");
 
-  const [activeTool, setActiveTool] = useState<"oracle" | "exif" | "footprint" | "face" | "phone" | "document" | "qrcode" | "shadow" | "nexus" | "omni" | "breach">("omni");
+  const [activeTool, setActiveTool] = useState<"oracle" | "exif" | "footprint" | "face" | "phone" | "document" | "qrcode" | "shadow" | "nexus" | "omni" | "breach" | "idcollector">("omni");
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [keywords, setKeywords] = useState("");
@@ -56,6 +56,7 @@ export function DashboardContent() {
   const nexusAction = useAction(api.tools.networkNexus);
   const omniAction = useAction(api.tools.omniSearch);
   const breachAction = useAction(api.tools.breachWatch);
+  const idCollectorAction = useAction(api.tools.idCollector);
 
   const historicalSearch = useQuery(api.searches.getSearch, idFromUrl ? { 
     id: idFromUrl as any,
@@ -145,6 +146,15 @@ export function DashboardContent() {
         });
         const sData = await scrapeRes.json();
         rawScrapedData = sData.scrapedText;
+      } else if (activeTool === "idcollector") {
+        setScrapeStatus("Extracting tracking IDs & fingerprints...");
+        const scrapeRes = await fetch("/api/scrape", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "id_collector", query }),
+        });
+        const sData = await scrapeRes.json();
+        rawScrapedData = sData.scrapedText;
       } else if (activeTool === "shadow") {
         setScrapeStatus("Correlating identities...");
         const scrapeRes = await fetch("/api/scrape", {
@@ -196,6 +206,8 @@ export function DashboardContent() {
         result = await qrcodeAction({ imageUrl, clerkId: userId ?? undefined, caseId: projectId ?? undefined, scrapedData: rawScrapedData });
       } else if (activeTool === "shadow") {
         result = await shadowAction({ username: query, clerkId: userId ?? undefined, caseId: projectId ?? undefined, scrapedData: rawScrapedData });
+      } else if (activeTool === "idcollector") {
+        result = await idCollectorAction({ url: query, clerkId: userId ?? undefined, caseId: projectId ?? undefined, scrapedData: rawScrapedData });
       } else if (activeTool === "nexus") {
         result = await nexusAction({ target: query, clerkId: userId ?? undefined, caseId: projectId ?? undefined, scrapedData: rawScrapedData });
       } else if (activeTool === "omni") {
@@ -334,6 +346,27 @@ export function DashboardContent() {
         </div>
 
         <div className="p-6 flex-grow overflow-y-auto">
+             <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-4 px-2">Ecosystem</div>
+             <nav className="grid gap-1 mb-8">
+                <button
+                  className="w-full p-2.5 rounded-xl transition-all text-left flex items-center gap-3 bg-black text-white shadow-md shadow-black/5"
+                >
+                  <div className="p-1.5 rounded-lg bg-white/10 shrink-0">
+                    <Terminal className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs font-bold tracking-tight">Nexus Dashboard</span>
+                </button>
+                <button
+                  onClick={() => router.push("/nexus")}
+                  className="w-full p-2.5 rounded-xl transition-all text-left flex items-center gap-3 text-neutral-500 hover:bg-neutral-100 hover:text-black group"
+                >
+                  <div className="p-1.5 rounded-lg bg-white border border-neutral-100 shadow-sm shrink-0">
+                    <Sparkles className="w-3.5 h-3.5 text-black" />
+                  </div>
+                  <span className="text-xs font-bold tracking-tight">Nexus AI</span>
+                </button>
+             </nav>
+
              <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-4 px-2">Intelligence Modules</div>
              <div className="grid gap-1">
                 {[
@@ -347,6 +380,7 @@ export function DashboardContent() {
                   { id: "qrcode", icon: QrCode, label: "QR Scanner" },
                   { id: "shadow", icon: Link, label: "Shadow Link" },
                   { id: "nexus", icon: Globe, label: "Network Nexus" },
+                  { id: "idcollector", icon: ShieldCheck, label: "ID Collector" },
                   { id: "breach", icon: ShieldAlert, label: "Breach Watch" },
                 ].map((tool) => {
                   const Icon = tool.icon;
@@ -616,6 +650,7 @@ export function DashboardContent() {
                         activeTool === "oracle" ? "Identify target or organization..." : 
                         activeTool === "shadow" ? "Enter username to correlate..." :
                         activeTool === "nexus" ? "Enter domain or IP to map..." :
+                        activeTool === "idcollector" ? "Enter URL to reverse tracking IDs..." :
                         activeTool === "breach" ? "Enter email or handle for breach scan..." :
                         "Trace handle, email or username..."
                       }

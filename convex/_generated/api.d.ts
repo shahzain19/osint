@@ -9,8 +9,10 @@
  */
 
 import type * as cases from "../cases.js";
+import type * as chat from "../chat.js";
 import type * as documents from "../documents.js";
 import type * as evidence from "../evidence.js";
+import type * as nexusChats from "../nexusChats.js";
 import type * as searches from "../searches.js";
 import type * as tools from "../tools.js";
 
@@ -22,8 +24,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   cases: typeof cases;
+  chat: typeof chat;
   documents: typeof documents;
   evidence: typeof evidence;
+  nexusChats: typeof nexusChats;
   searches: typeof searches;
   tools: typeof tools;
 }>;

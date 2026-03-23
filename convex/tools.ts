@@ -758,45 +758,13 @@ export const phoneNumberLookup = action({
     try {
       const prompt = `Analyze this phone number and provide comprehensive OSINT intelligence: ${args.phoneNumber}
 
-Provide detailed analysis including:
-
-1. NUMBER VALIDATION & FORMAT
-   - Is the number valid?
-   - International format
-   - National format
-   - E.164 format
-
-2. CARRIER INFORMATION
-   - Mobile carrier identification techniques
-   - Network operator detection methods
-   - MVNO identification
-
-3. LOCATION INTELLIGENCE
-   - Country identification
-   - Region/state detection
-   - Area code analysis
-   - Timezone information
-
-4. NUMBER TYPE CLASSIFICATION
-   - Mobile vs Landline vs VoIP
-   - Premium rate detection
-   - Toll-free identification
-
-5. SOCIAL MEDIA DISCOVERY
-   - Platforms that use phone numbers (WhatsApp, Telegram, Signal)
-   - Account discovery techniques
-   - Privacy considerations
-
-6. REVERSE LOOKUP STRATEGIES
-   - Recommended reverse lookup services
-   - Search engine techniques
-   - Social media search methods
-
-7. OSINT TECHNIQUES
-   - Google search operators
-   - Social media search
-   - People search engines
-   - Data breach databases
+Provide detailed analysis including (if possible):
+1. VALIDATION: International/National format, E.164.
+2. CARRIER: Mobile carrier, Network operator, MVNO.
+3. LOCATION: Country, Region/State, Area code, Timezone.
+4. TYPE: Mobile vs Landline vs VoIP.
+5. SOCIAL: WhatsApp/Telegram/Signal presence techniques.
+6. OSINT: Google dorks, Social search, Data breach leads.
 
 Provide professional intelligence report with actionable recommendations.`;
 
@@ -817,16 +785,8 @@ Provide professional intelligence report with actionable recommendations.`;
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Groq API error: ${response.status} ${response.statusText}`);
-      }
-
+      if (!response.ok) throw new Error(`Groq API error: ${response.status}`);
       const responseData = await response.json();
-      
-      if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
-        throw new Error("Invalid API response structure");
-      }
-      
       dossier = responseData.choices[0].message.content;
 
       if (args.clerkId) {
@@ -843,8 +803,7 @@ Provide professional intelligence report with actionable recommendations.`;
       }
       return { dossier };
     } catch (error: any) {
-      dossier = `### ❌ PHONE LOOKUP ERROR\n\n**Error:** ${error.message}\n\n**Manual Lookup Tools:**\n- Truecaller: Caller ID and spam detection\n- WhitePages: Reverse phone lookup\n- NumLookup: Free phone number lookup\n- Sync.me: Contact and caller ID\n\n**OSINT Techniques:**\n1. Google search: "${args.phoneNumber}"\n2. Social media search\n3. People search engines\n4. Data breach databases`;
-      
+      dossier = `### ❌ PHONE LOOKUP ERROR\n\n**Error:** ${error.message}`;
       if (args.clerkId) {
         let searchId: any = await ctx.runMutation(internal.searches.saveSearch, {
           clerkId: args.clerkId,
@@ -853,7 +812,7 @@ Provide professional intelligence report with actionable recommendations.`;
           name: "Phone Lookup",
           dossier,
           tool: "phone",
-          status: "completed",
+          status: "failed",
         });
         return { dossier, searchId };
       }
@@ -861,6 +820,85 @@ Provide professional intelligence report with actionable recommendations.`;
     }
   },
 });
+
+// 8. ID COLLECTOR: Analytics & Infrastructure Reversing
+export const idCollector = action({
+  args: {
+    url: v.string(),
+    clerkId: v.optional(v.string()),
+    caseId: v.optional(v.string()),
+    scrapedData: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const systemPrompt = `You are 'ID Collector', an elite technical OSINT specialist. Your expertise is in 'Infrastructure Reversing'—linking seemingly unrelated websites through shared tracking IDs, analytics codes, and server fingerprints.
+
+CRITICAL ANALYTICAL FRAMEWORK:
+1. TRACKING ID ANALYSIS:
+   - Identify unique strings (UA-XXXX, G-XXXX, pub-XXXX).
+   - Explain the significance of each ID (e.g., UA- IDs often belong to a single account).
+   - Suggest reverse-search techniques for these IDs.
+
+2. INFRASTRUCTURE FINGERPRINTING:
+   - Analyze server headers (Server, X-Powered-By).
+   - Identify CMS indicators or specific tech stacks.
+
+3. PIVOT STRATEGIES:
+   - Provide concrete next steps for the investigator.
+   - Suggest which ID is the 'strongest' link for a reverse search.
+
+FORMAT: Use a clinical, high-tech report style with clear sections and risk assessments.`;
+
+    const userPrompt = `TARGET URL: ${args.url}
+
+EXTRACTED DATA:
+${args.scrapedData || "No tracking IDs or unique fingerprints detected in the initial scan."}
+
+Provide a detailed infrastructure reversing report based on this data.`;
+
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          temperature: 0.2,
+          max_tokens: 3000,
+        }),
+      });
+
+      if (!response.ok) throw new Error(`Groq API Error: ${response.status}`);
+      const responseData = await response.json();
+      const dossier = responseData.choices[0].message.content;
+
+      if (args.clerkId) {
+        let searchId: any = await ctx.runMutation(internal.searches.saveSearch, {
+          clerkId: args.clerkId,
+          caseId: args.caseId as any,
+          query: args.url,
+          name: "ID Collector Scan",
+          dossier,
+          tool: "idcollector",
+          status: "completed",
+        });
+        return { dossier, searchId };
+      }
+      return { dossier };
+    } catch (error: any) {
+      console.error("ID Collector failed:", error);
+      const errorDossier = `### ❌ ID COLLECTOR PIPELINE FAILED\n\n**Error:** ${error.message}`;
+      return { dossier: errorDossier };
+    }
+  },
+});
+
+
 
 // 8. DOCUMENT ANALYSIS: Metadata & Hidden Data Extraction
 export const documentAnalysis = action({

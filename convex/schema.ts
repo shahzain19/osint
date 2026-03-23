@@ -73,4 +73,15 @@ export default defineSchema({
     description: v.optional(v.string()),
     timestamp: v.optional(v.number()),
   }).index("by_searchId", ["searchId"]),
+
+  nexusChats: defineTable({
+    clerkId: v.string(),
+    title: v.string(),
+    messages: v.array(v.object({
+      role: v.string(),
+      content: v.string(),
+    })),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_clerkId", ["clerkId"]),
 });
