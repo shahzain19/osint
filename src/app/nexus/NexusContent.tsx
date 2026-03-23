@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Send, Loader2, Shield, Menu, X as CloseIcon, User,
   Terminal, Trash2, Sparkles, MessageSquare, Plus,
-  Search, Globe, Radio, ChevronLeft
+  Search, Globe, Radio, ChevronLeft, Link2, Fingerprint
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -203,6 +203,8 @@ const TOOL_META: Record<string, { label: string; Icon: React.FC<{ className?: st
   web_search: { label: "Searching web", Icon: Search, color: "text-blue-500" },
   whois_lookup: { label: "WHOIS lookup", Icon: Globe, color: "text-green-500" },
   shodan_search: { label: "Shodan probe", Icon: Radio, color: "text-orange-500" },
+  shadow_link: { label: "Correlating handles", Icon: Link2, color: "text-purple-500" },
+  id_collector: { label: "Reversing tracking IDs", Icon: Fingerprint, color: "text-red-500" },
 };
 
 /* ───────── Markdown components ───────── */
@@ -499,7 +501,7 @@ export function NexusContent() {
           <div className="grid gap-2">
             {!chatHistory || chatHistory.length === 0 ? (
               !isSidebarCollapsed && <p className="text-[11px] text-neutral-300 px-2 py-3 italic">No saved chats yet.</p>
-            ) : chatHistory.map((chat) => (
+            ) : chatHistory.map((chat:any) => (
               <button
                 key={chat._id}
                 onClick={() => loadChat(chat)}
@@ -719,6 +721,14 @@ export function NexusContent() {
               <div className="flex items-center gap-2 group cursor-help">
                 <div className="p-1 rounded bg-orange-50 text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors"><Radio className="w-2.5 h-2.5" /></div>
                 <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest group-hover:text-neutral-600 transition-colors">Node Probe</span>
+              </div>
+              <div className="flex items-center gap-2 group cursor-help">
+                <div className="p-1 rounded bg-purple-50 text-purple-500 group-hover:bg-purple-500 group-hover:text-white transition-colors"><Link2 className="w-2.5 h-2.5" /></div>
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest group-hover:text-neutral-600 transition-colors">Shadow Link</span>
+              </div>
+              <div className="flex items-center gap-2 group cursor-help">
+                <div className="p-1 rounded bg-red-50 text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors"><Fingerprint className="w-2.5 h-2.5" /></div>
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest group-hover:text-neutral-600 transition-colors">ID Vault</span>
               </div>
             </div>
           </div>

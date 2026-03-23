@@ -11,6 +11,7 @@
 import type * as cases from "../cases.js";
 import type * as chat from "../chat.js";
 import type * as documents from "../documents.js";
+import type * as dossier from "../dossier.js";
 import type * as evidence from "../evidence.js";
 import type * as nexusChats from "../nexusChats.js";
 import type * as searches from "../searches.js";
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   cases: typeof cases;
   chat: typeof chat;
   documents: typeof documents;
+  dossier: typeof dossier;
   evidence: typeof evidence;
   nexusChats: typeof nexusChats;
   searches: typeof searches;

@@ -30,6 +30,10 @@ export function CaseManager() {
     selectedCaseId ? { caseId: selectedCaseId as any } : "skip"
   );
 
+  const generateSummary = useAction(api.dossier.generateCaseSummary);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
   const handleCreate = async () => {
     if (!newName || !userId) return;
     await createCase({ name: newName, description: newDesc, clerkId: userId });
@@ -49,6 +53,46 @@ export function CaseManager() {
     setIsAddingDoc(false);
     setDocTitle("");
     setDocContent("");
+  };
+
+  const handleGenerateSummary = async () => {
+    if (!selectedCaseId || !userId) return;
+    setIsSummarizing(true);
+    try {
+      await generateSummary({ caseId: selectedCaseId as any, clerkId: userId });
+    } catch (error) {
+      console.error("Summary generation failed:", error);
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
+  const handleExportDossier = async () => {
+    if (!selectedCase) return;
+    setIsExporting(true);
+    try {
+      const response = await fetch("/api/export-dossier", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseData: selectedCase }),
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Dossier_${selectedCase.name.replace(/\s+/g, '_')}.md`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (selectedCaseId && selectedCase) {
@@ -206,11 +250,25 @@ export function CaseManager() {
              <section className="p-6 bg-black rounded-2xl text-white">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-4">Intelligence Synthesis</h3>
                 <p className="text-[11px] leading-relaxed text-neutral-300 mb-4">
-                   Run a cross-tool correlation scan to link disparate findings across this case file.
+                   Summarize all case findings or export the complete investigative dossier for reporting.
                 </p>
-                <Button className="w-full bg-white text-black hover:bg-neutral-100 text-xs font-bold uppercase tracking-wider h-10">
-                   Synthesize Case
-                </Button>
+                <div className="space-y-2">
+                  <Button 
+                    onClick={handleGenerateSummary}
+                    disabled={isSummarizing}
+                    className="w-full bg-white text-black hover:bg-neutral-100 text-xs font-bold uppercase tracking-wider h-10"
+                  >
+                    {isSummarizing ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : "Generate Summary"}
+                  </Button>
+                  <Button 
+                    onClick={handleExportDossier}
+                    disabled={isExporting}
+                    variant="outline"
+                    className="w-full border-neutral-700 text-white hover:bg-white/10 text-xs font-bold uppercase tracking-wider h-10"
+                  >
+                    {isExporting ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : "Export Dossier"}
+                  </Button>
+                </div>
              </section>
           </aside>
         </div>

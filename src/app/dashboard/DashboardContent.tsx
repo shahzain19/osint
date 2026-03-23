@@ -754,7 +754,7 @@ export function DashboardContent() {
                        <div className="absolute right-0 mt-2 w-56 bg-white border border-neutral-100 rounded-2xl shadow-2xl z-50 p-2">
                           <div className="px-3 py-2 text-[10px] font-bold text-neutral-400 uppercase tracking-widest border-b border-neutral-50 mb-1">Select Active Case</div>
                           <div className="max-h-48 overflow-y-auto">
-                            {cases?.map(c => (
+                            {cases?.map((c:any) => (
                               <button 
                                 key={c._id}
                                 onClick={async () => {

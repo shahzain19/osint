@@ -75,3 +75,10 @@ export const assignSearchToCase = mutation({
     }
   },
 });
+
+export const updateCaseSummary = mutation({
+  args: { caseId: v.id("cases"), summary: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.caseId, { summary: args.summary });
+  },
+});
