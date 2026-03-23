@@ -5,7 +5,16 @@ export const createChat = mutation({
   args: {
     clerkId: v.string(),
     title: v.string(),
-    messages: v.array(v.object({ role: v.string(), content: v.string() })),
+    messages: v.array(v.object({
+      role: v.string(),
+      content: v.string(),
+      attachments: v.optional(v.array(v.object({
+        fileId: v.id("_storage"),
+        name: v.string(),
+        type: v.string(),
+        url: v.string(),
+      }))),
+    })),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -22,7 +31,16 @@ export const createChat = mutation({
 export const updateChat = mutation({
   args: {
     id: v.id("nexusChats"),
-    messages: v.array(v.object({ role: v.string(), content: v.string() })),
+    messages: v.array(v.object({
+      role: v.string(),
+      content: v.string(),
+      attachments: v.optional(v.array(v.object({
+        fileId: v.id("_storage"),
+        name: v.string(),
+        type: v.string(),
+        url: v.string(),
+      }))),
+    })),
     title: v.optional(v.string()),
   },
   handler: async (ctx, args) => {

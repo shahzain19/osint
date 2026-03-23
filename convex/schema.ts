@@ -80,6 +80,12 @@ export default defineSchema({
     messages: v.array(v.object({
       role: v.string(),
       content: v.string(),
+      attachments: v.optional(v.array(v.object({
+        fileId: v.id("_storage"),
+        name: v.string(),
+        type: v.string(),
+        url: v.string(),
+      }))),
     })),
     createdAt: v.number(),
     updatedAt: v.number(),

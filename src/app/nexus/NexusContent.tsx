@@ -4,8 +4,12 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Send, Loader2, Shield, Menu, X as CloseIcon, User,
   Terminal, Trash2, Sparkles, MessageSquare, Plus,
-  Search, Globe, Radio, ChevronLeft, Link2, Fingerprint
+  Search, Globe, Radio, ChevronLeft, Link2, Fingerprint,
+  Copy, Check, Paperclip, FileIcon, ImageIcon, FileText,
+  Image as LucideImage
 } from "lucide-react";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import ReactMarkdown from "react-markdown";
@@ -18,6 +22,12 @@ import type { Id } from "../../../convex/_generated/dataModel";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  attachments?: {
+    fileId: Id<"_storage">;
+    name: string;
+    type: string;
+    url: string;
+  }[];
 }
 
 type ToolStatus = {
@@ -207,67 +217,101 @@ const TOOL_META: Record<string, { label: string; Icon: React.FC<{ className?: st
   id_collector: { label: "Reversing tracking IDs", Icon: Fingerprint, color: "text-red-500" },
 };
 
+const CopyButton = ({ text }: { text: string }) => {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={(e) => {
+        e.preventDefault();
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }}
+      className="p-1.5 text-neutral-400 hover:text-white rounded-md hover:bg-white/10 transition-colors"
+      title="Copy code"
+    >
+      {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+    </button>
+  );
+};
+
 /* ───────── Markdown components ───────── */
 const MarkdownComponents: React.ComponentPropsWithoutRef<typeof ReactMarkdown>["components"] = {
-  h1: ({ children }) => <h1 className="text-2xl font-bold text-black tracking-tight mt-0 mb-6 leading-tight">{children}</h1>,
-  h2: ({ children }) => (
-    <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400 mt-12 mb-4 pt-8 border-t border-neutral-100 first:pt-0 first:border-0 first:mt-0">
-      {children}
-    </h2>
-  ),
-  h3: ({ children }) => <h3 className="text-lg font-bold text-black mt-8 mb-3">{children}</h3>,
-  p: ({ children }) => <p className="text-lg leading-9 text-neutral-700 mb-6 last:mb-0">{children}</p>,
+  h1: ({ children }) => <h1 className="text-2xl font-bold text-black tracking-tight mt-8 mb-4 first:mt-0">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-xl font-bold text-black mt-8 mb-4 border-b border-neutral-100 pb-2 first:mt-0">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-base font-bold text-black mt-6 mb-3">{children}</h3>,
+  p: ({ children }) => <p className="text-[15px] leading-relaxed text-neutral-800 mb-4 last:mb-0">{children}</p>,
   a: ({ children, href }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="text-black underline underline-offset-2 decoration-neutral-300 hover:decoration-black transition-colors">
+    <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline underline-offset-2 decoration-blue-200 hover:decoration-blue-600 transition-colors">
       {children}
     </a>
   ),
   strong: ({ children }) => <strong className="font-semibold text-black">{children}</strong>,
-  em: ({ children }) => <em className="italic text-neutral-500">{children}</em>,
-  ul: ({ children }) => <ul className="my-6 space-y-3 pl-0 list-none">{children}</ul>,
-  ol: ({ children }) => <ol className="my-6 space-y-3 pl-0 list-none">{children}</ol>,
-  li: ({ children }) => (
-    <li className="flex gap-4 text-lg text-neutral-700 leading-8">
-      <span className="mt-3.5 shrink-0 w-1.5 h-1.5 rounded-full bg-neutral-300 block" />
-      <span>{children}</span>
-    </li>
-  ),
+  em: ({ children }) => <em className="italic text-neutral-600">{children}</em>,
+  ul: ({ children }) => <ul className="my-4 space-y-2 pl-5 list-disc text-[15px] text-neutral-800 marker:text-neutral-400">{children}</ul>,
+  ol: ({ children }) => <ol className="my-4 space-y-2 pl-5 list-decimal text-[15px] text-neutral-800 marker:text-neutral-400">{children}</ol>,
+  li: ({ children }) => <li className="pl-1 leading-relaxed">{children}</li>,
   blockquote: ({ children }) => (
-    <blockquote className="my-6 pl-5 border-l-2 border-neutral-200">
-      <div className="text-lg text-neutral-500 italic leading-8">{children}</div>
+    <blockquote className="my-6 pl-4 border-l-4 border-neutral-200 bg-neutral-50/50 py-3 rounded-r-xl">
+      <div className="text-[15px] text-neutral-600 italic leading-relaxed">{children}</div>
     </blockquote>
   ),
-  code: ({ inline, children }: any) =>
-    inline ? (
-      <code className="font-mono text-[14px] text-neutral-800 bg-neutral-100 px-1.5 py-0.5 rounded-md tracking-tight">{children}</code>
-    ) : (
-      <code className="block font-mono text-sm leading-7 text-green-300 whitespace-pre break-words">{children}</code>
-    ),
-  pre: ({ children }) => (
-    <div className="my-7 rounded-2xl overflow-hidden border border-neutral-900 shadow-xl shadow-black/5">
-      <div className="flex items-center justify-between px-5 py-3 bg-neutral-900">
-        <div className="flex gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-red-500/60" />
-          <span className="w-3 h-3 rounded-full bg-yellow-500/60" />
-          <span className="w-3 h-3 rounded-full bg-green-500/60" />
+  code({ node, inline, className, children, ...props }: any) {
+    const match = /language-(\w+)/.exec(className || '');
+    const codeString = String(children).replace(/\n$/, '');
+    
+    if (!inline && match) {
+      return (
+        <div className="my-6 rounded-xl overflow-hidden border border-neutral-800 bg-[#1E1E1E] shadow-xl">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-900 border-b border-neutral-800">
+            <span className="text-xs font-medium text-neutral-400 font-mono tracking-wider">{match[1]}</span>
+            <CopyButton text={codeString} />
+          </div>
+          <div className="text-[13px] leading-relaxed [&>div>pre]:!bg-transparent [&>div>pre]:!m-0 [&>div>pre]:!p-5 [&>pre]:!bg-transparent [&>pre]:!m-0 [&>pre]:!p-5">
+            <SyntaxHighlighter
+              {...props}
+              style={vscDarkPlus}
+              language={match[1]}
+              PreTag="div"
+            >
+              {codeString}
+            </SyntaxHighlighter>
+          </div>
         </div>
-        <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">shell</span>
-      </div>
-      <div className="overflow-x-auto bg-neutral-950">
-        <pre className="p-6 text-sm leading-7 min-w-0">{children}</pre>
-      </div>
-    </div>
-  ),
-  hr: () => <hr className="my-10 border-neutral-100" />,
+      );
+    } else if (!inline) {
+       return (
+        <div className="my-6 rounded-xl overflow-hidden border border-neutral-800 bg-[#1E1E1E] shadow-xl">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-neutral-900 border-b border-neutral-800">
+            <span className="text-xs font-medium text-neutral-400 font-mono tracking-wider">text</span>
+            <CopyButton text={codeString} />
+          </div>
+          <div className="p-5 overflow-x-auto text-[13px] leading-relaxed text-neutral-300 font-mono whitespace-pre">
+            {codeString}
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <code className="font-mono text-[13px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100 mx-0.5" {...props}>
+        {children}
+      </code>
+    );
+  },
+  pre: ({ children }) => <>{children}</>,
+  hr: () => <hr className="my-8 border-neutral-100" />,
   table: ({ children }) => (
-    <div className="my-7 rounded-xl border border-neutral-100 overflow-hidden shadow-sm">
-      <table className="w-full text-base">{children}</table>
+    <div className="my-6 rounded-xl border border-neutral-200 overflow-hidden shadow-sm bg-white">
+      <div className="overflow-x-auto">
+        <table className="w-full text-[15px] min-w-[500px]">{children}</table>
+      </div>
     </div>
   ),
-  thead: ({ children }) => <thead className="bg-neutral-50 border-b border-neutral-100">{children}</thead>,
+  thead: ({ children }) => <thead className="bg-neutral-50 border-b border-neutral-200">{children}</thead>,
   tbody: ({ children }) => <tbody className="divide-y divide-neutral-100">{children}</tbody>,
-  th: ({ children }) => <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-neutral-400">{children}</th>,
-  td: ({ children }) => <td className="px-5 py-4 text-base text-neutral-600">{children}</td>,
+  th: ({ children }) => <th className="px-5 py-3 text-left text-[12px] font-bold uppercase tracking-widest text-neutral-500 whitespace-nowrap">{children}</th>,
+  td: ({ children }) => <td className="px-5 py-3.5 text-neutral-700">{children}</td>,
 };
 
 /* ───────── Component ───────── */
@@ -285,28 +329,72 @@ export function NexusContent() {
   const [suggestions] = useState(() => pickSuggestions());
   const [activeTools, setActiveTools] = useState<ToolStatus[]>([]);
   const [activeProvider, setActiveProvider] = useState<"groq" | "gemini">("groq");
+  const [pendingAttachments, setPendingAttachments] = useState<{ file: File; preview: string }[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createChat = useMutation(api.nexusChats.createChat);
   const updateChat = useMutation(api.nexusChats.updateChat);
   const deleteChat = useMutation(api.nexusChats.deleteChat);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const chatHistory = useQuery(
     api.nexusChats.listChats,
     userId ? { clerkId: userId } : "skip"
   );
 
   useEffect(() => { setMounted(true); }, []);
+  
+  // Auto-resize textarea
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 200)}px`;
+    }
+  }, [input]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, activeTools]);
 
   if (!mounted) return null;
 
-  const loadChat = (chat: { _id: Id<"nexusChats">; messages: { role: string; content: string }[] }) => {
+  const loadChat = (chat: { _id: Id<"nexusChats">; messages: any[] }) => {
     setActiveChatId(chat._id);
-    setMessages(chat.messages.map(m => ({ role: m.role as "user" | "assistant", content: m.content })));
+    setMessages(chat.messages.map(m => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+      attachments: m.attachments
+    })));
     setIsSidebarOpen(false);
+  };
+
+  const handleFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const newAttachments = files.map(file => ({
+      file,
+      preview: file.type.startsWith("image/") ? URL.createObjectURL(file) : ""
+    }));
+
+    setPendingAttachments(prev => [...prev, ...newAttachments]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeAttachment = (index: number) => {
+    setPendingAttachments(prev => {
+      const copy = [...prev];
+      if (copy[index].preview) URL.revokeObjectURL(copy[index].preview);
+      copy.splice(index, 1);
+      return copy;
+    });
   };
 
   const newChat = () => {
@@ -318,13 +406,45 @@ export function NexusContent() {
 
   const handleSend = async (text?: string) => {
     const query = (text ?? input).trim();
-    if (!query || isLoading) return;
+    if ((!query && pendingAttachments.length === 0) || isLoading) return;
 
-    const userMessage: Message = { role: "user", content: query };
+    setIsLoading(true);
+    setIsUploading(pendingAttachments.length > 0);
+    
+    let attachments: Message["attachments"] = [];
+
+    // Upload files if any
+    if (pendingAttachments.length > 0) {
+      try {
+        for (const { file } of pendingAttachments) {
+          const postUrl = await generateUploadUrl({});
+          const result = await fetch(postUrl, {
+            method: "POST",
+            headers: { "Content-Type": file.type },
+            body: file,
+          });
+          const { storageId } = await result.json();
+          const url = (await convex.query(api.evidence.getFileUrl, { fileId: storageId as Id<"_storage"> })) || "";
+          
+          attachments.push({
+            fileId: storageId as Id<"_storage">,
+            name: file.name,
+            type: file.type,
+            url,
+          });
+        }
+      } catch (err) {
+        console.error("Upload failed", err);
+        // We could show an error toast here
+      }
+    }
+
+    const userMessage: Message = { role: "user", content: query, attachments };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInput("");
-    setIsLoading(true);
+    setPendingAttachments([]);
+    setIsUploading(false);
     setActiveTools([]);
     setActiveProvider("groq");
 
@@ -397,8 +517,12 @@ export function NexusContent() {
 
       // Auto-save
       const finalMessages = [...updatedMessages, { role: "assistant" as const, content: fullContent }];
-      const convexMessages = finalMessages.map(m => ({ role: m.role, content: m.content }));
-      const title = userMessage.content.slice(0, 60) + (userMessage.content.length > 60 ? "…" : "");
+      const convexMessages = finalMessages.map(m => ({
+        role: m.role,
+        content: m.content,
+        attachments: m.attachments
+      }));
+      const title = userMessage.content.slice(0, 60) + (userMessage.content.length > 60 ? "…" : "") || "New Chat";
 
       if (activeChatId) {
         await updateChat({ id: activeChatId, messages: convexMessages });
@@ -441,7 +565,7 @@ export function NexusContent() {
       )}
       {/* Sidebar */}
       <aside className={`
-        fixed lg:relative inset-y-0 left-0 border-r border-neutral-100 flex flex-col bg-neutral-50 z-50 shrink-0
+        fixed lg:relative inset-y-0 left-0 border-r border-neutral-100 flex flex-col bg-neutral-50/80 backdrop-blur-xl z-50 shrink-0
         transition-all duration-300 ease-in-out lg:translate-x-0 will-change-[width,transform]
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
         ${isSidebarCollapsed ? "lg:w-20" : "w-72"}
@@ -587,6 +711,29 @@ export function NexusContent() {
           </div>
         </header>
 
+    {/* File Previews */}
+    {pendingAttachments.length > 0 && (
+      <div className="px-6 py-3 bg-neutral-50 border-b border-neutral-100 flex gap-3 overflow-x-auto scrollbar-none animate-in slide-in-from-bottom-2">
+        {pendingAttachments.map((att, i) => (
+          <div key={i} className="relative group shrink-0">
+            <div className="w-16 h-16 rounded-xl border-2 border-neutral-200 bg-white overflow-hidden flex items-center justify-center shadow-sm">
+              {att.preview ? (
+                <img src={att.preview} alt="preview" className="w-full h-full object-cover" />
+              ) : (
+                <FileText className="w-6 h-6 text-neutral-400" />
+              )}
+            </div>
+            <button
+              onClick={() => removeAttachment(i)}
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-lg hover:bg-neutral-800 transition-all opacity-0 group-hover:opacity-100"
+            >
+              <CloseIcon className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+
         {/* Feed */}
         <div className="flex-grow overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-100 hover:scrollbar-thumb-neutral-200">
           {messages.length === 0 ? (
@@ -627,12 +774,39 @@ export function NexusContent() {
             <div className="max-w-4xl mx-auto w-full divide-y divide-neutral-50">
               {messages.map((m, i) => (
                 <div key={i} className={`py-12 px-8 flex gap-8 transition-colors ${m.role === "assistant" ? "bg-neutral-50/30" : "bg-white"} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
-                  <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center mt-0.5 shadow-sm ${m.role === "assistant" ? "bg-black text-white" : "bg-neutral-100 text-neutral-500"}`}>
-                    {m.role === "assistant" ? <Sparkles className="w-5 h-5" /> : <User className="w-5 h-5 font-bold" />}
+                  <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center mt-0.5 shadow-sm transition-all duration-300 ${m.role === "assistant" ? "bg-black text-white shadow-black/20 ring-4 ring-neutral-50" : "bg-neutral-100 text-neutral-500 ring-4 ring-white"}`}>
+                    {m.role === "assistant" ? <Sparkles className="w-5 h-5 animate-pulse" /> : <User className="w-5 h-5 font-bold" />}
                   </div>
                   <div className="flex-grow min-w-0">
                     {m.role === "user" ? (
-                      <p className="text-base font-semibold text-black leading-relaxed">{m.content}</p>
+                      <div className="space-y-4">
+                        <p className="text-base font-semibold text-black leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                        {m.attachments && m.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-3">
+                            {m.attachments.map((att, idx) => (
+                              <a
+                                key={idx}
+                                href={att.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group block"
+                              >
+                                <div className="w-32 h-32 rounded-xl border border-neutral-200 bg-neutral-50 overflow-hidden relative shadow-sm hover:shadow-md transition-all">
+                                  {att.type.startsWith("image/") ? (
+                                    <img src={att.url} alt={att.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                  ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-3">
+                                      <FileIcon className="w-8 h-8 text-neutral-400" />
+                                      <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-tighter truncate w-full text-center">{att.name}</span>
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="relative">
                         <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
@@ -695,26 +869,46 @@ export function NexusContent() {
         </div>
 
         {/* Input */}
-        <div className="border-t border-neutral-100 bg-white p-6 shrink-0 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.05)]">
+        <div className="border-t border-neutral-100 bg-white/80 backdrop-blur-xl p-6 shrink-0 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] relative z-10">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3">
-              <div className="flex-grow bg-neutral-50 border-2 border-neutral-100 rounded-2xl flex items-center transition-all focus-within:border-black focus-within:bg-white focus-within:shadow-2xl focus-within:shadow-black/5 overflow-hidden">
+              <div className="flex-grow bg-neutral-50/50 border-2 border-neutral-100 rounded-3xl flex items-center transition-all duration-500 focus-within:border-black focus-within:bg-white focus-within:shadow-2xl focus-within:shadow-black/10 overflow-hidden ring-4 ring-transparent focus-within:ring-neutral-50">
+                <button
+                  onClick={handleFileClick}
+                  className="p-4 text-neutral-400 hover:text-black transition-all hover:bg-neutral-100 rounded-l-2xl"
+                  title="Upload intelligence files"
+                >
+                  <Paperclip className="w-5 h-5" />
+                </button>
                 <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={onFileChange}
+                  className="hidden"
+                  multiple
+                />
+                <textarea
                   ref={inputRef}
                   autoFocus
+                  rows={1}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                  placeholder="Intercept data or query intelligence..."
-                  className="flex-grow bg-transparent border-none outline-none py-4 px-6 text-[15px] text-black placeholder:text-neutral-400 font-medium tracking-tight"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder={isUploading ? "Uploading intelligence..." : "Intercept data or query intelligence..."}
+                  className="flex-grow bg-transparent border-none outline-none py-4 px-2 text-[15px] text-black placeholder:text-neutral-400 font-medium tracking-tight resize-none min-h-[56px] max-h-[200px] scrollbar-none"
                 />
               </div>
               <button
                 onClick={() => handleSend()}
-                disabled={isLoading || !input.trim()}
-                className="shrink-0 w-[52px] h-[52px] rounded-2xl bg-black text-white flex items-center justify-center hover:bg-neutral-800 transition-all active:scale-95 disabled:bg-neutral-100 disabled:text-neutral-300 shadow-lg shadow-black/10"
+                disabled={isLoading || (!input.trim() && pendingAttachments.length === 0)}
+                className="shrink-0 w-[56px] h-[56px] rounded-3xl bg-black text-white flex items-center justify-center hover:bg-neutral-800 transition-all active:scale-95 disabled:bg-neutral-100 disabled:text-neutral-300 shadow-xl shadow-black/10 hover:shadow-black/20"
               >
-                {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-5 h-5" />}
               </button>
             </div>
             {/* Tool capabilities hint */}
