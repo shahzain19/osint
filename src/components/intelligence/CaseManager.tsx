@@ -17,6 +17,9 @@ export function CaseManager() {
   const [newDesc, setNewDesc] = useState("");
   const [docTitle, setDocTitle] = useState("");
   const [docContent, setDocContent] = useState("");
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+  const [editDocTitle, setEditDocTitle] = useState("");
+  const [editDocContent, setEditDocContent] = useState("");
   
   const { userId } = useAuth();
   const router = useRouter();
@@ -24,6 +27,7 @@ export function CaseManager() {
   const cases = useQuery(api.cases.listCases, { clerkId: userId ?? "" });
   const createCase = useMutation(api.cases.createCase);
   const createDocument = useMutation(api.documents.createDocument);
+  const updateDocument = useMutation(api.documents.updateDocument);
   const deleteDocument = useMutation(api.documents.deleteDocument);
   
   const selectedCase = useQuery(api.cases.getCaseWithSearches, 
@@ -53,6 +57,19 @@ export function CaseManager() {
     setIsAddingDoc(false);
     setDocTitle("");
     setDocContent("");
+  };
+
+  const handleUpdateDocument = async () => {
+    if (!editDocTitle || !editDocContent || !editingDocId || !userId) return;
+    await updateDocument({
+      id: editingDocId as any,
+      clerkId: userId,
+      title: editDocTitle,
+      content: editDocContent,
+    });
+    setEditingDocId(null);
+    setEditDocTitle("");
+    setEditDocContent("");
   };
 
   const handleGenerateSummary = async () => {
@@ -135,7 +152,7 @@ export function CaseManager() {
             {/* Case Documents */}
             <section>
               <div className="flex items-center justify-between mb-6 border-b border-neutral-100 pb-2">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-400">Internal Case Documents</h2>
+                <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-400">Investigation Scratchpad & Notes</h2>
                 <button 
                   onClick={() => setIsAddingDoc(!isAddingDoc)}
                   className="text-[10px] font-bold uppercase tracking-widest text-black hover:underline flex items-center gap-1"
@@ -168,23 +185,58 @@ export function CaseManager() {
               <div className="grid grid-cols-1 gap-4 mb-12">
                 {selectedCase.documents?.map((doc: any) => (
                   <div key={doc._id} className="p-6 bg-white border border-neutral-100 rounded-2xl hover:border-neutral-300 transition-all group">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-black flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-neutral-400" /> {doc.title}
-                      </h3>
-                      <button 
-                        onClick={() => deleteDocument({ id: doc._id, clerkId: userId ?? "" })}
-                        className="text-[10px] font-bold uppercase tracking-widest text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                    <div className="prose prose-sm prose-neutral max-w-none text-neutral-600">
-                       <ReactMarkdown>{doc.content}</ReactMarkdown>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-neutral-50 text-[9px] font-bold uppercase tracking-widest text-neutral-300">
-                      Created {new Date(doc.createdAt).toLocaleDateString()}
-                    </div>
+                    {editingDocId === doc._id ? (
+                      <div className="space-y-4">
+                        <input 
+                          value={editDocTitle}
+                          onChange={(e) => setEditDocTitle(e.target.value)}
+                          placeholder="Document Title"
+                          className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none"
+                        />
+                        <textarea 
+                          value={editDocContent}
+                          onChange={(e) => setEditDocContent(e.target.value)}
+                          placeholder="Document content (Markdown supported)..."
+                          className="w-full bg-white border border-neutral-200 rounded-xl px-4 py-3 text-sm min-h-[150px] focus:outline-none"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Button onClick={handleUpdateDocument} className="bg-black text-white hover:bg-neutral-800 rounded-lg px-6 py-2 font-bold text-[10px] uppercase h-8">Save Changes</Button>
+                          <Button onClick={() => setEditingDocId(null)} variant="ghost" className="text-neutral-400 hover:text-black font-bold text-[10px] uppercase h-8">Cancel</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-bold text-black flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-neutral-400" /> {doc.title}
+                          </h3>
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-3">
+                            <button 
+                              onClick={() => {
+                                setEditingDocId(doc._id);
+                                setEditDocTitle(doc.title);
+                                setEditDocContent(doc.content);
+                              }}
+                              className="text-[10px] font-bold uppercase tracking-widest text-blue-500 hover:text-blue-600"
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              onClick={() => deleteDocument({ id: doc._id, clerkId: userId ?? "" })}
+                              className="text-[10px] font-bold uppercase tracking-widest text-red-500 hover:text-red-600"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                        <div className="prose prose-sm prose-neutral max-w-none text-neutral-600">
+                           <ReactMarkdown>{doc.content}</ReactMarkdown>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-neutral-50 text-[9px] font-bold uppercase tracking-widest text-neutral-300">
+                          Created {new Date(doc.createdAt).toLocaleDateString()}
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
                 {selectedCase.documents?.length === 0 && !isAddingDoc && (
