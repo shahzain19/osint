@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
 import { useRouter, redirect } from "next/navigation";
-import { Search, Shield, Users, Zap, Globe, Fingerprint, Camera, Database, HelpCircle, ChevronDown, ArrowRight, Activity, Lock, SearchCode } from "lucide-react";
+import { Search, Shield, Users, Zap, Globe, Fingerprint, Camera, Database, HelpCircle, ChevronDown, ArrowRight, Activity, Lock, SearchCode, Sparkles, Check } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function LandingPage() {
@@ -171,6 +172,63 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Ecosystem Section */}
+      <section className="py-24 bg-black text-white">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="mb-16">
+            <h2 className="text-4xl font-bold tracking-tight mb-4">The Complete OSINT Ecosystem</h2>
+            <p className="text-neutral-400 max-w-xl text-lg">A unified platform integrating an advanced intelligence dashboard, conversational AI analyst, and secure case management.</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl hover:border-neutral-700 transition-colors shadow-2xl">
+              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6">
+                <Database className="w-6 h-6 text-white" />
+              </div>
+              <h4 className="font-bold mb-3 text-xl">Intelligence Dashboard</h4>
+              <p className="text-sm text-neutral-400 leading-relaxed mb-6">The core investigative engine featuring 12 professional intelligence modules.</p>
+              <ul className="text-sm text-neutral-300 space-y-3 font-medium">
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> OmniSearch & Oracle</li>
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Shadow Link Correlation</li>
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Face & EXIF Forensics</li>
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Infrastructure Mapping</li>
+              </ul>
+            </div>
+            
+            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl hover:border-neutral-700 transition-colors shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-500 pointer-events-none">
+                <Sparkles className="w-32 h-32" />
+              </div>
+              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 relative z-10">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <h4 className="font-bold mb-3 text-xl relative z-10">Nexus AI</h4>
+              <p className="text-sm text-neutral-400 leading-relaxed mb-6 relative z-10">Your personal intelligence analyst powered by advanced language models.</p>
+              <ul className="text-sm text-neutral-300 space-y-3 font-medium relative z-10">
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Context-Aware Analysis</li>
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Threat Intel Synthesis</li>
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Unrestricted Reasoning</li>
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Actionable Mitigations</li>
+              </ul>
+            </div>
+
+            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl hover:border-neutral-700 transition-colors shadow-2xl">
+              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6">
+                <Lock className="w-6 h-6 text-white" />
+              </div>
+              <h4 className="font-bold mb-3 text-xl">Case Management</h4>
+              <p className="text-sm text-neutral-400 leading-relaxed mb-6">Secure workspace and evidence vault for organizing and sharing findings.</p>
+              <ul className="text-sm text-neutral-300 space-y-3 font-medium">
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Persistent Case Tracking</li>
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Evidence Vault Storage</li>
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> End-to-End Encryption</li>
+                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Advanced Export Options</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How it Works */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-8">
@@ -309,9 +367,10 @@ export default function LandingPage() {
               <h5 className="font-bold text-sm uppercase tracking-wider mb-6">Company</h5>
               <ul className="space-y-4 text-sm text-neutral-500">
                 <li className="hover:text-black cursor-pointer transition-colors">About</li>
-                <li className="hover:text-black cursor-pointer transition-colors">Privacy Policy</li>
-                <li className="hover:text-black cursor-pointer transition-colors">Terms of Service</li>
-                <li className="hover:text-black cursor-pointer transition-colors">Ethics Charter</li>
+                <li><Link href="/privacy" className="hover:text-black cursor-pointer transition-colors block">Privacy Policy</Link></li>
+                <li><Link href="/toc" className="hover:text-black cursor-pointer transition-colors block">Terms of Service</Link></li>
+                <li><Link href="/disclaimer" className="hover:text-black cursor-pointer transition-colors block">Legal Disclaimer</Link></li>
+                <li><Link href="/ethics" className="hover:text-black cursor-pointer transition-colors block">Ethics Charter</Link></li>
               </ul>
             </div>
           </div>

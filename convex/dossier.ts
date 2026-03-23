@@ -7,7 +7,7 @@ export const generateCaseSummary = action({
     caseId: v.id("cases"),
     clerkId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
     // 1. Fetch case data (searches, evidence, documents)
     const caseData = await ctx.runQuery(api.cases.getCaseWithSearches, {
       caseId: args.caseId,
