@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useConvex } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -319,6 +319,7 @@ export function NexusContent() {
   const router = useRouter();
   const { user } = useUser();
   const { userId } = useAuth();
+  const convex = useConvex();
   const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -424,7 +425,7 @@ export function NexusContent() {
             body: file,
           });
           const { storageId } = await result.json();
-          const url = (await convex.query(api.evidence.getFileUrl, { fileId: storageId as Id<"_storage"> })) || "";
+          const url = (await convex.query(api.files.getFileUrl, { fileId: storageId as Id<"_storage"> })) || "";
           
           attachments.push({
             fileId: storageId as Id<"_storage">,

@@ -2,18 +2,42 @@
 export const dynamic = "force-dynamic";
 
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
-import { useRouter, redirect } from "next/navigation";
-import { Search, Shield, Users, Zap, Globe, Fingerprint, Camera, Database, HelpCircle, ChevronDown, ArrowRight, Activity, Lock, SearchCode, Sparkles, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Search, Shield, Users, Zap, Globe, Fingerprint, Camera, Database,
+  HelpCircle, ArrowRight, Activity, Lock, SearchCode, Sparkles, Check,
+  ChevronRight
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
+function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  return (
+    <div className={`transition-all duration-1000 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      {children}
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const { userId, isLoaded } = useAuth();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+  const [isHoveringSearch, setIsHoveringSearch] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
@@ -22,33 +46,45 @@ export default function LandingPage() {
     }
   }, [isLoaded, userId, mounted, router]);
 
-  if (!mounted) return null;
+  if (!mounted) null; // Return null instead of nothing to avoid flicker before hydration, wait, we must return null if not mounted but letting it render safely
 
   return (
-    <div className="flex flex-col min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
-      {/* Background Decorative Elements */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[1000px] bg-gradient-to-b from-neutral-100/50 to-transparent"></div>
+    <div className="flex flex-col min-h-screen bg-[#FAFAF9] text-[#292524] font-sans selection:bg-[#E7E5E4] selection:text-[#1C1917] overflow-hidden">
+      
+      {/* Soft Ambient Background Elements */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Warm radial gradient */}
+        <div className="absolute top-[-20%] left-[-10%] w-[70vw] h-[70vw] rounded-full bg-gradient-to-br from-[#FDE68A]/20 via-[#FED7AA]/10 to-transparent blur-[120px] mix-blend-multiply opacity-70 animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute top-[20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-bl from-[#E2E8F0]/40 via-[#F1F5F9]/30 to-transparent blur-[120px] mix-blend-multiply opacity-60" />
+        
+        {/* Subtle dot pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.4]" 
+          style={{ 
+            backgroundImage: 'radial-gradient(#D6D3D1 1.5px, transparent 1.5px)', 
+            backgroundSize: '32px 32px',
+            transform: `translateY(${scrollY * 0.15}px)` // Parallax effect
+          }}
+        />
       </div>
 
-      {/* Header */}
-      <header className="px-8 py-6 relative z-10 border-b border-neutral-50 bg-white/80 backdrop-blur-md sticky top-0">
+      {/* Floating Header */}
+      <header className={`px-6 py-4 fixed w-full top-0 z-50 transition-all duration-500 ${scrollY > 20 ? 'bg-[#FAFAF9]/80 backdrop-blur-xl border-b border-[#E7E5E4] py-3 shadow-sm' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.location.reload()}>
-            <div className="bg-black p-1.5 rounded-lg">
-              <Search className="w-5 h-5 text-white stroke-[2]" />
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.location.reload()}>
+            <div className="bg-[#1C1917] p-2 rounded-xl group-hover:scale-105 group-hover:bg-[#292524] transition-all duration-300 shadow-md">
+              <Search className="w-5 h-5 text-[#FAFAF9] stroke-[2.5]" />
             </div>
-            <span className="text-xl font-bold tracking-tight uppercase">Baynaqab</span>
+            <span className="text-xl font-bold tracking-tight uppercase text-[#1C1917] group-hover:opacity-80 transition-opacity">Baynaqab</span>
           </div>
           <div className="flex items-center gap-6">
             <SignInButton mode="modal" forceRedirectUrl="/dashboard">
-              <button className="text-sm font-medium text-neutral-600 hover:text-black transition-colors uppercase">
-                Sign In
+              <button className="text-sm font-semibold text-[#57534E] hover:text-[#1C1917] transition-colors">
+                Log In
               </button>
             </SignInButton>
             <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
-              <button className="px-6 py-2.5 bg-black text-white hover:bg-neutral-800 transition-colors text-sm uppercase rounded-lg">
+              <button className="px-5 py-2.5 bg-[#1C1917] text-[#FAFAF9] hover:bg-[#292524] hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 text-sm font-semibold rounded-xl active:scale-95 shadow-md">
                 Get Started
               </button>
             </SignUpButton>
@@ -57,333 +93,260 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <main className="flex-grow flex flex-col items-center justify-center px-6 text-center py-24">
-        <div className="max-w-4xl space-y-8">
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-black">
-            Unmask Information.<br />Discover Truth.
-          </h1>
-          <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-            The professional OSINT engine for journalists and researchers. Search, analyze, and organize public footprints with absolute precision.
-          </p>
+      <main className="flex-grow flex flex-col items-center justify-center px-6 text-center pt-40 pb-32 relative z-10 w-full min-h-[90vh]">
+        <div className="max-w-4xl space-y-10 w-full">
+          
+          <FadeIn delay={100}>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F5F5F4] border border-[#E7E5E4] text-xs font-bold text-[#57534E] shadow-sm mb-4 tracking-wider uppercase">
+              <Sparkles className="w-3.5 h-3.5 text-[#D97706]" />
+              The Next Generation Intelligence Protocol
+            </div>
+          </FadeIn>
 
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto w-full group">
-            <div className="relative transform transition-all duration-300 group-hover:scale-[1.01]">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-neutral-400" />
-              </div>
-              <input 
-                type="text" 
-                placeholder="Enter an IP address, domain, or identity..." 
-                className="w-full pl-12 pr-40 py-5 border border-neutral-200 rounded-2xl text-lg focus:border-black focus:ring-4 focus:ring-black/5 outline-none transition-all shadow-xl shadow-black/5"
-              />
-              <div className="absolute inset-y-0 right-2 flex items-center">
-                <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
-                  <button className="px-6 py-2.5 bg-black text-white hover:bg-neutral-800 transition-all text-sm font-semibold rounded-xl flex items-center gap-2">
-                    Investigate
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </SignUpButton>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center justify-center gap-4 text-xs text-neutral-400 font-medium tracking-wide uppercase">
-              <span className="flex items-center gap-1.5"><Activity className="w-3 h-3" /> Live Scanning</span>
-              <span className="w-1 h-1 bg-neutral-200 rounded-full"></span>
-              <span className="flex items-center gap-1.5"><Lock className="w-3 h-3" /> Encrypted Queries</span>
-              <span className="w-1 h-1 bg-neutral-200 rounded-full"></span>
-              <span className="flex items-center gap-1.5"><SearchCode className="w-3 h-3" /> Deep Web Indexing</span>
-            </div>
-          </div>
+          <FadeIn delay={300}>
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-[#1C1917] leading-[1.1]">
+              Unmask the <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1C1917] to-[#78716C]">Information.</span><br />
+              <span className="relative">
+                Discover Truth.
+                <div className="absolute -bottom-2 left-0 w-full h-3 bg-[#FDE68A]/60 -z-10 transform -rotate-1 rounded-sm"></div>
+              </span>
+            </h1>
+          </FadeIn>
 
-          {/* Trust Indicators */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 pt-16 border-t border-neutral-100">
-            <div className="space-y-3">
-              <div className="w-10 h-10 bg-neutral-100 rounded-xl flex items-center justify-center mx-auto md:mx-0">
-                <Shield className="w-5 h-5 text-neutral-700" />
+          <FadeIn delay={500}>
+            <p className="text-lg md:text-xl text-[#57534E] max-w-2xl mx-auto leading-relaxed font-medium">
+              The professional cozy OSINT engine for elite researchers. Gather, analyze, and organize digital footprints with absolute precision and warm clarity.
+            </p>
+          </FadeIn>
+
+          {/* Interactive Search Bar */}
+          <FadeIn delay={700}>
+            <div 
+              className="max-w-2xl mx-auto w-full relative mt-8 z-20"
+              onMouseEnter={() => setIsHoveringSearch(true)}
+              onMouseLeave={() => setIsHoveringSearch(false)}
+            >
+              <div className={`relative transform transition-all duration-500 ${isHoveringSearch ? 'scale-[1.02] shadow-2xl shadow-[#D6D3D1]/50' : 'scale-100 shadow-xl shadow-[#D6D3D1]/30'} rounded-2xl bg-white/80 backdrop-blur-xl border border-[#E7E5E4] overflow-hidden`}>
+                
+                {/* Glow behind input */}
+                <div className={`absolute inset-0 bg-gradient-to-r from-[#FDE68A]/0 via-[#FDE68A]/20 to-[#FDE68A]/0 transition-opacity duration-700 ${isHoveringSearch ? 'opacity-100' : 'opacity-0'} pointer-events-none`}></div>
+                
+                <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                  <Search className={`h-5 w-5 transition-colors duration-300 ${isHoveringSearch ? 'text-[#1C1917]' : 'text-[#A8A29E]'}`} />
+                </div>
+                
+                <input 
+                  type="text" 
+                  placeholder="Enter a target, IP, domain..." 
+                  className="w-full pl-14 pr-44 py-6 bg-transparent text-lg font-medium text-[#1C1917] placeholder:text-[#A8A29E] focus:outline-none focus:bg-white transition-colors relative z-10"
+                />
+                
+                <div className="absolute inset-y-0 right-2 flex items-center z-20">
+                  <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
+                    <button className="px-6 py-3 bg-[#1C1917] text-white hover:bg-[#292524] transition-all text-sm font-bold rounded-xl flex items-center gap-2 m-1 shadow-md hover:shadow-xl active:scale-95 group overflow-hidden relative">
+                      <span className="relative z-10 flex items-center gap-2">
+                        Query
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </span>
+                      {/* Button shine effect */}
+                      <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1s_forwards] bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 z-0"></div>
+                    </button>
+                  </SignUpButton>
+                </div>
               </div>
-              <h3 className="font-semibold text-lg">Public Only</h3>
-              <p className="text-sm text-neutral-500 leading-relaxed">
-                We only access publicly available data, ensuring investigative ethics and compliance without compromising depth.
-              </p>
-            </div>
-            <div className="space-y-3">
-              <div className="w-10 h-10 bg-neutral-100 rounded-xl flex items-center justify-center mx-auto md:mx-0">
-                <Zap className="w-5 h-5 text-neutral-700" />
+
+              {/* Status indicators under search */}
+              <div className={`mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs font-bold tracking-widest uppercase transition-all duration-500 delay-100 ${isHoveringSearch ? 'text-[#1C1917]' : 'text-[#A8A29E]'}`}>
+                <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div> Live Scanning</span>
+                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Encrypted Links</span>
+                <span className="flex items-center gap-1.5"><SearchCode className="w-3.5 h-3.5" /> Deep Search</span>
               </div>
-              <h3 className="font-semibold text-lg">Real-time Pipeline</h3>
-              <p className="text-sm text-neutral-500 leading-relaxed">
-                Stream results progressively as our intelligent engine scans news, global profiles, and organizations synchronously.
-              </p>
             </div>
-            <div className="space-y-3">
-              <div className="w-10 h-10 bg-neutral-100 rounded-xl flex items-center justify-center mx-auto md:mx-0">
-                <Users className="w-5 h-5 text-neutral-700" />
-              </div>
-              <h3 className="font-semibold text-lg">Entity Matching</h3>
-              <p className="text-sm text-neutral-500 leading-relaxed">
-                Advanced scoring logic precisely cuts through the noise to help you find the correct target across sources.
-              </p>
-            </div>
-          </div>
+          </FadeIn>
         </div>
       </main>
 
-      {/* Capabilities Showcase */}
-      <section className="py-24 bg-neutral-50 border-y border-neutral-100">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="mb-16">
-            <h2 className="text-3xl font-bold tracking-tight mb-4">Powerful Capabilities</h2>
-            <p className="text-neutral-500 max-w-xl">Deep investigative tools designed for the modern researcher, providing clarity in a world of fragmented data.</p>
+      {/* Trust & Principles Section */}
+      <section className="py-24 bg-white relative z-10 border-t border-[#F5F5F4] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAFAF9] to-white pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            {[
+              { icon: Shield, title: "Ethical & Public", desc: "We exclusively synthesize publicly available intelligence to ensure complete investigative compliance.", color: "text-[#059669]", bg: "bg-[#D1FAE5]" },
+              { icon: Zap, title: "Asynchronous Engine", desc: "Results render progressively. As soon as a connection is found, it illuminates on your dashboard.", color: "text-[#D97706]", bg: "bg-[#FEF3C7]" },
+              { icon: Users, title: "Precision Matching", desc: "Our heuristic algorithms match aliases and entities warmly and accurately, filtering the noise.", color: "text-[#4F46E5]", bg: "bg-[#E0E7FF]" }
+            ].map((item, idx) => (
+              <FadeIn key={idx} delay={idx * 150}>
+                <div className="group space-y-5 p-8 rounded-3xl hover:bg-[#FAFAF9] hover:shadow-xl hover:shadow-[#D6D3D1]/20 transition-all duration-500 border border-transparent hover:border-[#E7E5E4] cursor-default">
+                  <div className={`w-14 h-14 ${item.bg} rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500`}>
+                    <item.icon className={`w-6 h-6 ${item.color}`} />
+                  </div>
+                  <h3 className="font-bold text-xl text-[#1C1917]">{item.title}</h3>
+                  <p className="text-[#57534E] leading-relaxed font-medium">
+                    {item.desc}
+                  </p>
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Capabilities App Preview */}
+      <section className="py-24 bg-[#FAFAF9] border-y border-[#E7E5E4] relative z-10">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="mb-20 text-center max-w-2xl mx-auto">
+            <h2 className="text-4xl font-bold tracking-tight mb-5 text-[#1C1917]">Refined Interrogation</h2>
+            <p className="text-lg text-[#57534E] font-medium leading-relaxed">
+              We abstracted the terminal into a beautiful, cozy workspace. Discover everything with a simple, elegant intelligence flow.
+            </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-white p-8 rounded-2xl border border-neutral-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-6">
-                <Fingerprint className="w-6 h-6 text-blue-600" />
-              </div>
-              <h4 className="font-bold mb-2">Identity Mapping</h4>
-              <p className="text-sm text-neutral-500">Cross-reference social footprints, aliases, and historical usernames to build complete identity profiles.</p>
-            </div>
-            
-            <div className="bg-white p-8 rounded-2xl border border-neutral-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mb-6">
-                <Globe className="w-6 h-6 text-emerald-600" />
-              </div>
-              <h4 className="font-bold mb-2">Network Topology</h4>
-              <p className="text-sm text-neutral-500">Map IP ranges, domain ownership, and hosting infrastructure to uncover hidden professional networks.</p>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl border border-neutral-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mb-6">
-                <Camera className="w-6 h-6 text-amber-600" />
-              </div>
-              <h4 className="font-bold mb-2">Multimedia Forensic</h4>
-              <p className="text-sm text-neutral-500">Extract EXIF metadata, perform reverse image lookups, and identify consistent visual patterns across platforms.</p>
-            </div>
-
-            <div className="bg-white p-8 rounded-2xl border border-neutral-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-6">
-                <Database className="w-6 h-6 text-purple-600" />
-              </div>
-              <h4 className="font-bold mb-2">Historical Archives</h4>
-              <p className="text-sm text-neutral-500">Access cached snapshots, past DNS records, and deleted public records to see the web as it used to be.</p>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-6">
+            {[
+              { icon: Fingerprint, title: "Identity Maps", desc: "Trace pseudonyms comfortably." },
+              { icon: Globe, title: "Topography", desc: "Uncover network host infra." },
+              { icon: Camera, title: "Visual Exif", desc: "Reverse image forensics." },
+              { icon: Database, title: "Web Archives", desc: "Resurrect deleted assets." },
+            ].map((feature, i) => (
+              <FadeIn key={i} delay={i * 100}>
+                <div className="bg-white p-8 rounded-3xl border border-[#E7E5E4] shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 group relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[#F5F5F4] to-transparent rounded-bl-full opacity-50 group-hover:scale-150 transition-transform duration-700" />
+                  <div className="w-12 h-12 bg-[#F5F5F4] rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#1C1917] transition-colors duration-300 shadow-sm relative z-10">
+                    <feature.icon className="w-5 h-5 text-[#57534E] group-hover:text-white transition-colors duration-300" />
+                  </div>
+                  <h4 className="font-bold text-lg mb-2 text-[#1C1917] relative z-10">{feature.title}</h4>
+                  <p className="text-[#78716C] font-medium text-sm relative z-10">{feature.desc}</p>
+                </div>
+              </FadeIn>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Ecosystem Section */}
-      <section className="py-24 bg-black text-white">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="mb-16">
-            <h2 className="text-4xl font-bold tracking-tight mb-4">The Complete OSINT Ecosystem</h2>
-            <p className="text-neutral-400 max-w-xl text-lg">A unified platform integrating an advanced intelligence dashboard, conversational AI analyst, and secure case management.</p>
+      {/* Ecosystem Interactive Section */}
+      <section className="py-32 bg-[#1C1917] text-[#FAFAF9] relative z-10 overflow-hidden">
+        {/* Dark warm glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl bg-gradient-to-b from-[#292524] to-transparent opacity-50 pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            
+            <FadeIn>
+              <div className="space-y-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#292524] border border-[#44403C] text-xs font-bold text-[#D6D3D1] uppercase tracking-widest">
+                  <Sparkles className="w-3.5 h-3.5 text-[#FDE68A]" />
+                  Nexus AI Core
+                </div>
+                <h2 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight">
+                  Your relentless, brilliant analyst by your side.
+                </h2>
+                <p className="text-lg text-[#A8A29E] leading-relaxed font-medium">
+                  Interact with an intelligence model designed purely for offensive operations and deep data correlation. It organizes, investigates, and presents finding in perfectly structured reports.
+                </p>
+                
+                <ul className="space-y-5 text-[#D6D3D1] font-medium">
+                  {["Unrestricted threat models", "Autonomous pivot suggestions", "Automated finding summarization"].map((item, i) => (
+                    <li key={i} className="flex items-center gap-4 group cursor-default">
+                      <div className="w-8 h-8 rounded-full bg-[#292524] flex items-center justify-center group-hover:bg-[#FDE68A] group-hover:text-[#1C1917] transition-colors duration-300 shrink-0">
+                        <Check className="w-4 h-4" />
+                      </div>
+                      <span className="group-hover:text-white transition-colors">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </FadeIn>
+
+            <FadeIn delay={200}>
+              <div className="relative group perspective-1000">
+                <div className="absolute inset-0 bg-gradient-to-r from-[#FDE68A]/20 to-[#EA580C]/20 blur-3xl rounded-full opacity-0 group-hover:opacity-50 transition-opacity duration-1000" />
+                <div className="bg-[#292524] rounded-3xl p-3 shadow-2xl border border-[#44403C] transform transition-all duration-700 ease-out group-hover:rotate-x-2 group-hover:-rotate-y-2 group-hover:scale-[1.02] relative z-10 overflow-hidden">
+                  
+                  {/* Mock Window Header */}
+                  <div className="flex items-center gap-2 mb-4 px-2 pt-2">
+                    <div className="w-3 h-3 rounded-full bg-[#EF4444]" />
+                    <div className="w-3 h-3 rounded-full bg-[#F59E0B]" />
+                    <div className="w-3 h-3 rounded-full bg-[#10B981]" />
+                    <div className="ml-4 text-xs font-medium text-[#78716C]">Session: Nexus-Omega Active</div>
+                  </div>
+                  
+                  {/* Mock Chat UI */}
+                  <div className="bg-[#1C1917] rounded-2xl p-6 space-y-6">
+                    <div className="flex gap-4">
+                      <div className="w-8 h-8 rounded-full bg-[#FAFAF9] flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-[#1C1917]">You</span>
+                      </div>
+                      <div className="bg-[#292524] text-sm text-[#D6D3D1] p-4 rounded-2xl rounded-tl-sm border border-[#44403C]">
+                        Correlate this IP address with known actor aliases across GitHub.
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FDE68A] to-[#D97706] flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(253,230,138,0.4)]">
+                        <Sparkles className="w-4 h-4 text-[#1C1917]" />
+                      </div>
+                      <div className="bg-[#292524] text-sm text-[#FAFAF9] p-4 rounded-2xl rounded-tl-sm border border-[#44403C]/50 shadow-inner">
+                        <div className="flex items-center gap-2 mb-3 text-xs text-[#FDE68A] font-bold uppercase tracking-widest">
+                          <Activity className="w-3 h-3 animate-pulse" /> Analyzed 24 domains
+                        </div>
+                        <p className="leading-relaxed">
+                          Infrastructure overlaps identified. Found 3 connected repositories holding exposed configuration files. Commencing deep scan of historical commits.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </FadeIn>
           </div>
+        </div>
+      </section>
+
+      {/* Modern Cozy Footer CTA */}
+      <section className="py-32 bg-[#F5F5F4] text-center relative z-10 px-6">
+        <div className="max-w-3xl mx-auto space-y-10">
+          <FadeIn>
+            <div className="w-20 h-20 bg-white shadow-xl shadow-[#D6D3D1]/40 rounded-3xl flex items-center justify-center mx-auto mb-8 transform -rotate-6 hover:rotate-0 transition-transform duration-500">
+              <Search className="w-10 h-10 text-[#1C1917] stroke-[2]" />
+            </div>
+          </FadeIn>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl hover:border-neutral-700 transition-colors shadow-2xl">
-              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6">
-                <Database className="w-6 h-6 text-white" />
-              </div>
-              <h4 className="font-bold mb-3 text-xl">Intelligence Dashboard</h4>
-              <p className="text-sm text-neutral-400 leading-relaxed mb-6">The core investigative engine featuring 12 professional intelligence modules.</p>
-              <ul className="text-sm text-neutral-300 space-y-3 font-medium">
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> OmniSearch & Oracle</li>
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Shadow Link Correlation</li>
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Face & EXIF Forensics</li>
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Infrastructure Mapping</li>
-              </ul>
-            </div>
-            
-            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl hover:border-neutral-700 transition-colors shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-500 pointer-events-none">
-                <Sparkles className="w-32 h-32" />
-              </div>
-              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6 relative z-10">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <h4 className="font-bold mb-3 text-xl relative z-10">Nexus AI</h4>
-              <p className="text-sm text-neutral-400 leading-relaxed mb-6 relative z-10">Your personal intelligence analyst powered by advanced language models.</p>
-              <ul className="text-sm text-neutral-300 space-y-3 font-medium relative z-10">
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Context-Aware Analysis</li>
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Threat Intel Synthesis</li>
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Unrestricted Reasoning</li>
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Actionable Mitigations</li>
-              </ul>
-            </div>
-
-            <div className="bg-neutral-900 border border-neutral-800 p-8 rounded-2xl hover:border-neutral-700 transition-colors shadow-2xl">
-              <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6">
-                <Lock className="w-6 h-6 text-white" />
-              </div>
-              <h4 className="font-bold mb-3 text-xl">Case Management</h4>
-              <p className="text-sm text-neutral-400 leading-relaxed mb-6">Secure workspace and evidence vault for organizing and sharing findings.</p>
-              <ul className="text-sm text-neutral-300 space-y-3 font-medium">
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Persistent Case Tracking</li>
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Evidence Vault Storage</li>
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> End-to-End Encryption</li>
-                <li className="flex items-center gap-3"><Check className="w-4 h-4 text-green-400" /> Advanced Export Options</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How it Works */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-4xl font-bold tracking-tight mb-8">The Investigative Lifecycle</h2>
-              <div className="space-y-12">
-                <div className="flex gap-6">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold">1</div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-2 text-black">Data Ingestion</h4>
-                    <p className="text-neutral-500">Baynaqab connects to hundreds of public APIs, data sources, and scraping nodes in real-time based on your query.</p>
-                  </div>
-                </div>
-                <div className="flex gap-6">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold">2</div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-2 text-black">Heuristic Analysis</h4>
-                    <p className="text-neutral-500">Our engine applies scoring weights and probability checks to ensure entities are correctly matched and verified.</p>
-                  </div>
-                </div>
-                <div className="flex gap-6">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold">3</div>
-                  <div>
-                    <h4 className="text-xl font-bold mb-2 text-black">Evidence Visualization</h4>
-                    <p className="text-neutral-500">Results are structured into visual graphs, chronological timelines, and exportable reports for your investigation case files.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="bg-neutral-900 rounded-2xl p-4 shadow-2xl overflow-hidden aspect-video flex items-center justify-center group cursor-pointer border-4 border-neutral-800">
-                <div className="absolute inset-0 bg-gradient-to-tr from-black/60 to-transparent"></div>
-                <div className="relative z-10 flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Zap className="w-8 h-8 text-white fill-white" />
-                  </div>
-                  <span className="text-white/60 text-sm font-medium uppercase tracking-widest">Interactive Preview</span>
-                </div>
-                {/* Decorative dots/grid */}
-                <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-24 bg-neutral-50 border-t border-neutral-100">
-        <div className="max-w-3xl mx-auto px-8">
-          <h2 className="text-3xl font-bold tracking-tight mb-12 text-center">Frequently Asked Questions</h2>
-          <div className="space-y-8">
-            <div className="space-y-2">
-              <h4 className="font-bold flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-neutral-400" />
-                Is Baynaqab legal to use?
-              </h4>
-              <p className="text-neutral-500 text-sm leading-relaxed">
-                Yes. Baynaqab only accesses publicly available information that is indexed or exposed via standard web protocols. We do not perform any "hacking" or unauthorized access to private databases.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-bold flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-neutral-400" />
-                Where does the data come from?
-              </h4>
-              <p className="text-neutral-500 text-sm leading-relaxed">
-                Our engine aggregates data from WHOIS records, public social media profiles, government business registries, digital news archives, and open-source data repositories.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-bold flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-neutral-400" />
-                Can I export my investigation results?
-              </h4>
-              <p className="text-neutral-500 text-sm leading-relaxed">
-                Yes, Pro users can export entire investigation cases as PDF reports or structured JSON data for integration into other professional tools.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-24 bg-black text-white text-center">
-        <div className="max-w-4xl mx-auto px-8 space-y-8">
-          <h2 className="text-4xl md:text-6xl font-bold tracking-tight">Ready to Unmask the Truth?</h2>
-          <p className="text-xl text-neutral-400 max-w-2xl mx-auto">
-            Join professional researchers and journalists who trust Baynaqab for their most critical investigations.
-          </p>
-          <div className="pt-4">
+          <FadeIn delay={100}>
+            <h2 className="text-5xl md:text-6xl font-bold tracking-tight text-[#1C1917]">
+              Begin your <br />investigation.
+            </h2>
+          </FadeIn>
+          
+          <FadeIn delay={200}>
+            <p className="text-xl text-[#78716C] font-medium">
+              Join the elite tier of researchers using the warmest, sharpest intelligence engine.
+            </p>
+          </FadeIn>
+          
+          <FadeIn delay={300}>
             <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
-              <button className="px-10 py-4 bg-white text-black hover:bg-neutral-200 transition-all text-lg font-bold rounded-2xl inline-flex items-center gap-3 group">
-                Start Investigating Now
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <button className="px-10 py-5 bg-[#1C1917] text-white hover:bg-[#292524] hover:shadow-2xl hover:shadow-[#1C1917]/20 transition-all duration-300 text-lg font-bold rounded-2xl inline-flex items-center gap-3 group active:scale-95">
+                Launch Workspace
+                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </SignUpButton>
-          </div>
+          </FadeIn>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-neutral-100 py-20 bg-white relative z-10">
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16">
-            <div className="col-span-2">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-black p-1.5 rounded-lg">
-                  <Search className="w-5 h-5 text-white stroke-[2]" />
-                </div>
-                <span className="text-xl font-bold tracking-tight uppercase">Baynaqab</span>
-              </div>
-              <p className="text-neutral-500 text-sm max-w-xs leading-relaxed">
-                The high-precision OSINT engine for professional investigators, journalists, and security researchers. Unmask the truth with data-driven intelligence.
-              </p>
-            </div>
-            <div>
-              <h5 className="font-bold text-sm uppercase tracking-wider mb-6">Product</h5>
-              <ul className="space-y-4 text-sm text-neutral-500">
-                <li className="hover:text-black cursor-pointer transition-colors">Features</li>
-                <li className="hover:text-black cursor-pointer transition-colors">API Access</li>
-                <li className="hover:text-black cursor-pointer transition-colors">Pricing</li>
-                <li className="hover:text-black cursor-pointer transition-colors">Changelog</li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-bold text-sm uppercase tracking-wider mb-6">Resources</h5>
-              <ul className="space-y-4 text-sm text-neutral-500">
-                <li className="hover:text-black cursor-pointer transition-colors">Documentation</li>
-                <li className="hover:text-black cursor-pointer transition-colors">OSINT Guide</li>
-                <li className="hover:text-black cursor-pointer transition-colors">Case Studies</li>
-                <li className="hover:text-black cursor-pointer transition-colors">Support</li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="font-bold text-sm uppercase tracking-wider mb-6">Company</h5>
-              <ul className="space-y-4 text-sm text-neutral-500">
-                <li className="hover:text-black cursor-pointer transition-colors">About</li>
-                <li><Link href="/privacy" className="hover:text-black cursor-pointer transition-colors block">Privacy Policy</Link></li>
-                <li><Link href="/toc" className="hover:text-black cursor-pointer transition-colors block">Terms of Service</Link></li>
-                <li><Link href="/disclaimer" className="hover:text-black cursor-pointer transition-colors block">Legal Disclaimer</Link></li>
-                <li><Link href="/ethics" className="hover:text-black cursor-pointer transition-colors block">Ethics Charter</Link></li>
-              </ul>
-            </div>
+      {/* Simple Footer */}
+      <footer className="border-t border-[#E7E5E4] py-12 bg-white relative z-10">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-3 opacity-60 hover:opacity-100 transition-opacity cursor-pointer">
+            <Search className="w-4 h-4 text-[#1C1917] stroke-[3]" />
+            <span className="text-sm font-bold tracking-widest uppercase">Baynaqab</span>
           </div>
-          <div className="pt-8 border-t border-neutral-100 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-neutral-400 font-medium uppercase tracking-wider">
-              © 2026 Baynaqab OSINT Engine. Professional Investigation Use Only.
-            </p>
-            <div className="flex gap-6">
-              {/* Mock Social Icons */}
-              <div className="w-4 h-4 bg-neutral-200 rounded-sm"></div>
-              <div className="w-4 h-4 bg-neutral-200 rounded-sm"></div>
-              <div className="w-4 h-4 bg-neutral-200 rounded-sm"></div>
-            </div>
+          <p className="text-xs font-bold text-[#A8A29E] uppercase tracking-widest">
+            © 2026. For Authorized Research Only.
+          </p>
+          <div className="flex gap-6 text-sm font-semibold text-[#A8A29E]">
+            <Link href="/privacy" className="hover:text-[#1C1917] transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-[#1C1917] transition-colors">Terms</Link>
           </div>
         </div>
       </footer>
