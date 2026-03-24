@@ -115,7 +115,7 @@ export default function LandingPage() {
 
           <FadeIn delay={500}>
             <p className="text-lg md:text-xl text-[#57534E] max-w-2xl mx-auto leading-relaxed font-medium">
-              The professional cozy OSINT engine for elite researchers. Gather, analyze, and organize digital footprints with absolute precision and warm clarity.
+              The professional OSINT engine for elite researchers. Gather, analyze, and organize digital footprints with absolute precision and clarity.
             </p>
           </FadeIn>
 
@@ -174,7 +174,7 @@ export default function LandingPage() {
             {[
               { icon: Shield, title: "Ethical & Public", desc: "We exclusively synthesize publicly available intelligence to ensure complete investigative compliance.", color: "text-[#059669]", bg: "bg-[#D1FAE5]" },
               { icon: Zap, title: "Asynchronous Engine", desc: "Results render progressively. As soon as a connection is found, it illuminates on your dashboard.", color: "text-[#D97706]", bg: "bg-[#FEF3C7]" },
-              { icon: Users, title: "Precision Matching", desc: "Our heuristic algorithms match aliases and entities warmly and accurately, filtering the noise.", color: "text-[#4F46E5]", bg: "bg-[#E0E7FF]" }
+              { icon: Users, title: "Precision Matching", desc: "Our heuristic algorithms match aliases and entities accurately, filtering the noise.", color: "text-[#4F46E5]", bg: "bg-[#E0E7FF]" }
             ].map((item, idx) => (
               <FadeIn key={idx} delay={idx * 150}>
                 <div className="group space-y-5 p-8 rounded-3xl hover:bg-[#FAFAF9] hover:shadow-xl hover:shadow-[#D6D3D1]/20 transition-all duration-500 border border-transparent hover:border-[#E7E5E4] cursor-default">
@@ -198,7 +198,7 @@ export default function LandingPage() {
           <div className="mb-20 text-center max-w-2xl mx-auto">
             <h2 className="text-4xl font-bold tracking-tight mb-5 text-[#1C1917]">Refined Interrogation</h2>
             <p className="text-lg text-[#57534E] font-medium leading-relaxed">
-              We abstracted the terminal into a beautiful, cozy workspace. Discover everything with a simple, elegant intelligence flow.
+              We abstracted the terminal into a beautiful workspace. Discover everything with a simple, elegant intelligence flow.
             </p>
           </div>
           
@@ -302,7 +302,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Modern Cozy Footer CTA */}
+      {/* Modern Footer CTA */}
       <section className="py-32 bg-[#F5F5F4] text-center relative z-10 px-6">
         <div className="max-w-3xl mx-auto space-y-10">
           <FadeIn>
@@ -319,7 +319,7 @@ export default function LandingPage() {
           
           <FadeIn delay={200}>
             <p className="text-xl text-[#78716C] font-medium">
-              Join the elite tier of researchers using the warmest, sharpest intelligence engine.
+              Join the elite tier of researchers using the sharpest intelligence engine.
             </p>
           </FadeIn>
           
